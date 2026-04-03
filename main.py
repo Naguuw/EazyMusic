@@ -3,10 +3,10 @@ import os
 import time
 import random
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote
 
 BASE_URL = input("Link Music: ")
-SAVE_FOLDER = "Downloads"
+SAVE_FOLDER = input("Folder Name: ")
 
 os.makedirs(SAVE_FOLDER, exist_ok=True)
 session = requests.Session()
@@ -36,14 +36,14 @@ def get_details_links(url):
                 if href:
                     full_url = urljoin(url, href)
                     music_links.add(full_url)
-                
+
     except Exception as e:
         print("Error:",e)
 
     return list(music_links)
 
 def get_flac_link(url):
-    print(f"Opening {url}")
+    print(f"[OPEN] {url}")
 
     try:
         res = session.get(url, headers=headers)
@@ -67,28 +67,40 @@ def get_flac_link(url):
 
 def download(url):
     filename = os.path.basename(urlparse(url).path)
+    filename = unquote(filename).strip()
     path = os.path.join(SAVE_FOLDER, filename)
 
+    temp_size = 0
+
     if os.path.exists(path):
-        print(f"Skipping {filename}")
-        return
+        temp_size = os.path.getsize(path)
     
-    print(f"Down {filename}")
+    headers_range = headers.copy()
+    if temp_size > 0:
+        headers_range["Range"] = f"bytes={temp_size}-"
+        print(f"Resuming {filename} from {temp_size} bytes")
+    else:
+        print(f"Download {filename}")
 
     try:
-        r = session.get(url, headers=headers, stream=True)
+        r = session.get(url, headers=headers_range, stream=True, timeout=10)
 
-        if r.status_code != 200:
-            print("Gagal download")
+        if r.status_code not in (200, 206):
+            print("Download Failed")
             return
         
-        with open(path, "wb") as f:
-            for chunk in r.iter_content(1024):
+        mode = "ab" if temp_size > 0 else "wb"
+
+        with open(path, mode) as f:
+            for chunk in r.iter_content(8192):
                 if chunk:
                     f.write(chunk)
+        
+        return True
 
     except Exception as e:
         print("Downloading Error", e)
+        return False
 
 def main():
     detail_links = get_details_links(BASE_URL) or []
@@ -108,9 +120,30 @@ def main():
     
     print(f"\nTotal FLAC: {len(flac_links)}\n")
 
-    for flac in flac_links:
-        download(flac)
+    success = []
+    failed = []
+
+    for i, flac in enumerate(flac_links, start=1):
+        print(f"\n[{i}/{len(flac_links)}]")
+
+        result = download(flac)
+
+        if result:
+            success.append(flac)
+        else:
+            failed.append(flac)
+
         time.sleep(random.uniform(1,2))
+    
+    print("\n== History ==")
+    print(f"Total: {len(flac_links)}")
+    print(f"Success: {len(success)}")
+    print(f"Failed: {len(failed)}")
+
+    if failed:
+        print("\nFailed Files: ")
+        for f in failed:
+            print("-", os.path.basename(urlparse(f).path))
 
 if __name__ == "__main__":
     main()
