@@ -33,7 +33,7 @@ Make sure you have Python 3.x installed on your system. You will also need the `
 
 Run the script using Python:
 ```bash
-bash python main.py
+python main.py
 ```
 
 **Input required during execution:**
