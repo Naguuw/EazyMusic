@@ -2,6 +2,7 @@ import requests
 import os
 import time
 import random
+from tqdm import tqdm
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, unquote
 
@@ -89,12 +90,21 @@ def download(url):
             print("Download Failed")
             return
         
+        total_size = int(r.headers.get('content-length', 0)) + temp_size
         mode = "ab" if temp_size > 0 else "wb"
 
-        with open(path, mode) as f:
+        with open(path, mode) as f, tqdm(
+            total=total_size, 
+            unit='iB', 
+            unit_scale=True, 
+            unit_divisor=1024, 
+            initial=temp_size, 
+            desc=filename
+        ) as bar:
             for chunk in r.iter_content(8192):
                 if chunk:
                     f.write(chunk)
+                    bar.update(len(chunk))
         
         return True
 
