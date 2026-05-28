@@ -19,6 +19,7 @@ A specialized Python script designed to scrape and download high-quality FLAC mu
 Make sure you have Python 3.x installed. You will need the following libraries:
 - `requests`
 - `beautifulsoup4`
+- `tqdm`
 
 ### Installation
 
@@ -48,7 +49,6 @@ python main.py
 
 - **Target Site**: KHinsider
 - **Language**: Python 3
-- **Key Logic**: Uses `BeautifulSoup` for HTML parsing and `requests.Session` for persistent connections.
 
 ## 📝 License
 
