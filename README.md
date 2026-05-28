@@ -29,7 +29,7 @@ Make sure you have Python 3.x installed. You will need the following libraries:
 
 2. **Install dependencies:**
    ```bash
-   pip install requests beautifulsoup4
+   pip install requests beautifulsoup4 tqdm
    ```
 
 ### Usage
